@@ -1,3 +1,5 @@
+Set up
+
 * Install dependencies
 
 ```
