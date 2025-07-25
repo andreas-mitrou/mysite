@@ -130,13 +130,16 @@
 				}, 1000, function () {
 					var $target = $(target);
 					$target.focus();
-					if ($target.is(':focus')) {
+					if ($target.is(':focus')) {	
 						return false;
 					} else {
 						$target.attr('tabindex', '-1');
 						$target.focus();
 					}
 				});
+				setTimeout(function () {
+					$('#navbar01').removeClass('show');
+				}, 1000);
 			}
 		}
 	});
