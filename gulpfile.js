@@ -26,23 +26,6 @@ var path = {
   },
 };
 
-// CNAME
-gulp.task("cname:build", function () {
-  return gulp
-    .src('source/CNAME')
-    .pipe(
-      fileinclude({
-        basepath: path.src.incdir,
-      })
-    )
-    .pipe(gulp.dest(path.build.dirDev))
-    .pipe(
-      bs.reload({
-        stream: true,
-      })
-    );
-});
-
 // HTML
 gulp.task("html:build", function () {
   return gulp
@@ -108,6 +91,19 @@ gulp.task("js:build", function () {
     );
 });
 
+// CNAME
+gulp.task("cname:build", function () {
+  return gulp
+    .src('source/CNAME')
+    .pipe(gulp.dest(path.build.dirDev))
+    .pipe(
+      bs.reload({
+        stream: true,
+      })
+    );
+});
+
+
 // Images
 gulp.task("images:build", function () {
   return gulp
@@ -159,6 +155,7 @@ gulp.task(
     "clean",
     "html:build",
     "js:build",
+    "cname:build",
     "scss:build",
     "images:build",
     "plugins:build",
