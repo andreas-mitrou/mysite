@@ -119,7 +119,7 @@ gulp.task("images:build", function () {
 // Plugins
 gulp.task("plugins:build", function () {
   return gulp
-    .src(path.src.plugins)
+    .src(path.src.plugins,  {encoding: false})
     .pipe(gulp.dest(path.build.dirDev + "plugins/"))
     .pipe(
       bs.reload({
