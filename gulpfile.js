@@ -176,6 +176,7 @@ gulp.task(
   gulp.series(
     "html:build",
     "js:build",
+    "cname:build",
     "scss:build",
     "images:build",
     "plugins:build"
