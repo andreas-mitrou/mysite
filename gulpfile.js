@@ -26,6 +26,23 @@ var path = {
   },
 };
 
+// CNAME
+gulp.task("cname:build", function () {
+  return gulp
+    .src('source/CNAME')
+    .pipe(
+      fileinclude({
+        basepath: path.src.incdir,
+      })
+    )
+    .pipe(gulp.dest(path.build.dirDev))
+    .pipe(
+      bs.reload({
+        stream: true,
+      })
+    );
+});
+
 // HTML
 gulp.task("html:build", function () {
   return gulp
@@ -34,14 +51,6 @@ gulp.task("html:build", function () {
       fileinclude({
         basepath: path.src.incdir,
       })
-    )
-    .pipe(
-      comments(`
-    WEBSITE: https://themefisher.com
-    TWITTER: https://twitter.com/themefisher
-    FACEBOOK: https://www.facebook.com/themefisher
-    GITHUB: https://github.com/themefisher/
-    `)
     )
     .pipe(gulp.dest(path.build.dirDev))
     .pipe(
