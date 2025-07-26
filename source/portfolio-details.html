@@ -1,0 +1,67 @@
+@@include('header.htm')
+
+@@include('blocks/navigation.htm')
+
+<section class="section" id="project1">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12 text-center">
+        <h1>IoT - Edge Computing System.</h1>
+      </div>
+      <div class="col-lg-12">
+        <p>The traditional cloud centric computing paradigm has brought a revolution to information technology. 
+          However, as the demand for cloud services increases day by day, various concerns around their security, latency 
+          and performance are raised. This project proposes an alternative architectural approach using the edge computing 
+          paradigm to build a reliable prototype system of processing information on the edge layer. Using the concepts of 
+          object recognition and image classification as a scenario, this prototype system aspires to give solutions to the 
+          issues and concerns around the traditional cloud centric computing paradigm. </p>
+        <p class="mb-50">Commonly, an IoT system follows the architecture of the Cloud-centric Internet of Things (CIoT) paradigm, 
+          meaning that the data are produced from the devices are finally processed at a central cloud platform. Although this is a 
+          common pattern for IoT applications, it faces a lot of challenges in terms of bandwidth, latency, uninterrupted-operation, 
+          resources, and security [4]. One of the approaches to address the above challenges is to move from cloud centric model to 
+          a more geo-distributed model in which the computations, networking and storage resources can be distributed much closer to 
+          the data sources.</p>
+          <div class="text-center">
+            <img class="img-fluid mb-50" src="images/iot-edge.png" alt="image">
+          </div>
+        <p class="mb-50">As a use case for the prototype system of this project, videos captured from smart phone cameras, web cameras and custom camera modules such as ESP 32 are processed on the edge layer and objects of interest are recognised by using machine learning models that are also running on the edge layer. Then, when the objects of interest have been identified, the bounding boxes of the detected objects along with the confidence of detection are sent to the cloud layer where can be further processed and analysed.
+The objects of interest that have been selected to be detected are face masks. The system can initially identify from the captured frames if person faces are located inside the scene and then detect face masks on those persons. When these are identified the bounding boxes of the face masks, and the confidence of detection is computed. This information, the bounding boxes and the confidence are sent to the cloud where are stored and can be further processed/analysed
+</p>
+        <div class="text-center">
+          <img class="img-fluid mb-50" src="images/iot-arch.png" alt="image">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="project2">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12 text-center">
+        <h1>Vessel reports system</h1>
+      </div>
+      <div class="col-lg-12">
+        <p>Vessel Reports Warehouse is a platfotrm that enables users that are workking with SSRS to do the following;</p>
+            <p>- Log in to the platform with their username and password</p>
+            <p>- Create/edit/delete queries and datasources that will be used for reports</p>
+            <p>- Create/edit/delete reports and schedule to run on specific date and time for specific vessels</p>
+            <p>- Monitor the behavior of the system through logs screen</p>
+         <div class="text-center">
+          <img class="img-fluid mb-50" src="images/rp-scheduler-1.png" alt="image">
+        </div>
+         <div class="text-center">
+          <img class="img-fluid mb-50" src="images/rp-scheduler-2.png" alt="image">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+@@include('blocks/footer.htm')
+
+@@include('footer.htm')
+
+

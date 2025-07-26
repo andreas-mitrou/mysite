@@ -144,6 +144,13 @@
 		}
 	});
 
+	var page = window.location.pathname.split("/").pop();
+
+	if (["portfolio-details.html"].indexOf(page) > -1) {
+			$('#navbar01 > ul > li > a').each(function () {
+			$(this).attr('href', 'index.html' + $(this).attr('href'));
+		});
+	}
 
 })(jQuery);
 // End Jquery Function
