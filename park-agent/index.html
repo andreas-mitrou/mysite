@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Park Agent</title>
+<meta name="description" content="Park Agent: a community parking app where drivers announce the spot they are leaving and earn credits for it.">
+<style>
+  :root {
+    --blue: #1565C0;
+    --blue-dark: #0B2F5B;
+    --blue-soft: #E3EEF9;
+    --ink: #1B2430;
+    --muted: #5A6675;
+    --line: #D5DDE8;
+    --bg: #F2F5FA;
+    --card: #FFFFFF;
+    --orange: #E65100;
+    --orange-soft: #FFF3E8;
+    --green: #2E7D32;
+    --green-soft: #E3F6E8;
+    --gold: #F9A825;
+    --red: #C62828;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #0d1520; overflow: hidden; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: var(--ink); }
+
+  /* A fixed 1280x720 stage, scaled to fit any window. */
+  #stage { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: 0 0; background: var(--bg); overflow: hidden; }
+  .slide { position: absolute; inset: 0; padding: 64px 80px 72px; opacity: 0; visibility: hidden; transition: opacity .25s ease; display: flex; flex-direction: column; }
+  .slide.active { opacity: 1; visibility: visible; }
+
+  h1 { font-size: 92px; line-height: 1; margin: 0; letter-spacing: -2px; }
+  h2 { font-size: 46px; line-height: 1.1; margin: 0 0 12px; color: var(--blue); letter-spacing: -.5px; }
+  h3 { font-size: 26px; margin: 0 0 8px; }
+  p { font-size: 26px; line-height: 1.4; margin: 0 0 14px; }
+  .lead { font-size: 30px; color: var(--muted); margin-bottom: 28px; max-width: 980px; }
+  .kicker { font-size: 18px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 14px; }
+  ul { margin: 0; padding-left: 30px; font-size: 26px; line-height: 1.45; }
+  li { margin-bottom: 10px; }
+  b, strong { font-weight: 700; }
+  .muted { color: var(--muted); }
+  .small { font-size: 20px; }
+
+  .title { background: linear-gradient(135deg, var(--blue-dark), var(--blue)); color: #fff; justify-content: center; }
+  .title .kicker { color: #BBD4F1; }
+  .title p { color: #D6E6F8; font-size: 36px; max-width: 900px; }
+  .title .meta { margin-top: 40px; font-size: 22px; color: #9DBFE6; }
+
+  .cols { display: flex; gap: 48px; align-items: flex-start; flex: 1; min-height: 0; }
+  .cols > * { flex: 1; min-width: 0; }
+  .grid { display: grid; gap: 22px; }
+  .grid.g3 { grid-template-columns: repeat(3, 1fr); }
+  .grid.g2 { grid-template-columns: repeat(2, 1fr); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px 26px; }
+  .card h3 { color: var(--blue-dark); }
+  .card p, .card li { font-size: 21px; margin-bottom: 6px; }
+  .card ul { font-size: 21px; padding-left: 24px; }
+  .big { font-size: 56px; font-weight: 800; color: var(--blue); line-height: 1; }
+
+  .pill { display: inline-block; font-size: 18px; font-weight: 700; padding: 4px 12px; border-radius: 999px; background: var(--blue-soft); color: var(--blue-dark); margin-right: 8px; }
+  .pill.orange { background: var(--orange-soft); color: var(--orange); }
+  .pill.green { background: var(--green-soft); color: var(--green); }
+  .pill.gold { background: #FFF6DB; color: #8A6100; }
+  .star { color: var(--gold); }
+
+  .shot { border-radius: 14px; border: 1px solid var(--line); box-shadow: 0 8px 30px rgba(11, 47, 91, .15); width: 100%; display: block; background: #fff; }
+  .shot-wrap { flex: 1.15; }
+  .caption { font-size: 18px; color: var(--muted); margin-top: 10px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 22px; background: var(--card); border-radius: 14px; overflow: hidden; border: 1px solid var(--line); }
+  th, td { text-align: left; padding: 12px 18px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--blue-soft); color: var(--blue-dark); font-size: 18px; letter-spacing: 1px; text-transform: uppercase; }
+  tr:last-child td { border-bottom: 0; }
+  td.num { font-weight: 800; white-space: nowrap; }
+  .pos { color: var(--green); } .neg { color: var(--red); }
+
+  .flow { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 18px; }
+  .node { background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 24px 28px; text-align: center; width: 330px; }
+  .node h3 { color: var(--blue-dark); font-size: 28px; }
+  .node p { font-size: 21px; color: var(--muted); margin: 0; }
+  .arrow { font-size: 44px; color: var(--blue); }
+  .loopback { text-align: center; margin-top: 22px; font-size: 24px; color: var(--muted); }
+
+  svg text { font-family: inherit; }
+  .diagram { width: 100%; }
+
+  /* Chrome */
+  #bar { position: fixed; left: 0; top: 0; height: 4px; background: var(--gold); width: 0; z-index: 10; transition: width .25s ease; }
+  #hud { position: fixed; right: 16px; bottom: 12px; z-index: 10; display: flex; gap: 8px; align-items: center; color: #fff; font-size: 14px; opacity: .85; }
+  #hud button { background: rgba(255,255,255,.14); color: #fff; border: 1px solid rgba(255,255,255,.3); border-radius: 8px; padding: 6px 12px; font-size: 14px; cursor: pointer; }
+  #hud button:hover { background: rgba(255,255,255,.25); }
+  .hint { position: fixed; left: 16px; bottom: 14px; z-index: 10; color: #9db1c9; font-size: 13px; }
+
+  @media print {
+    @page { size: 1280px 720px; margin: 0; }
+    html, body { overflow: visible; height: auto; background: #fff; }
+    #stage { position: static; transform: none !important; width: 1280px; height: auto; overflow: visible; }
+    .slide { position: relative; opacity: 1; visibility: visible; width: 1280px; height: 720px; page-break-after: always; break-after: page; }
+    #bar, #hud, .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+
+<div id="stage">
+
+  <!-- 1 Title -->
+  <section class="slide title" data-title="Park Agent">
+    <div class="kicker">Community parking · Zografou, Athens</div>
+    <h1>Park Agent</h1>
+    <p>Find a spot. Free one up. Everyone parks faster.</p>
+    <div class="meta">A mobile app and API, built with Expo / React Native and ASP.NET Core</div>
+  </section>
+
+  <!-- 2 Problem -->
+  <section class="slide" data-title="The problem">
+    <div class="kicker">The problem</div>
+    <h2>Drivers circle for parking while empty spots go unannounced</h2>
+    <div class="grid g3" style="margin-top:28px">
+      <div class="card"><div class="big">1</div><h3>Nobody knows what is free</h3><p>Public parking data is thin, and often a proxy such as "the meter is in service", not "the spot is empty".</p></div>
+      <div class="card"><div class="big">2</div><h3>The person who knows stays quiet</h3><p>A driver walking back to their car knows a spot is about to open, but has no way to tell the people nearby.</p></div>
+      <div class="card"><div class="big">3</div><h3>No reason to share</h3><p>Even a helpful driver gets nothing for it, so almost nobody does it.</p></div>
+    </div>
+  </section>
+
+  <!-- 3 Idea -->
+  <section class="slide" data-title="The idea">
+    <div class="kicker">The idea</div>
+    <h2>Give to get: sharing a spot pays, taking one costs a little</h2>
+    <p class="lead">Drivers who are about to leave announce their spot. Drivers looking for one unlock it. Credits and reputation keep it fair.</p>
+    <div class="flow">
+      <div class="node"><h3>Announce</h3><p>You are leaving. Tell the community where, and earn credits.</p></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node"><h3>Unlock &amp; reserve</h3><p>A seeker spends a free daily unlock or 1 credit and holds the spot for 10 minutes.</p></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node"><h3>I parked</h3><p>The seeker confirms at the spot. The leaver is rewarded.</p></div>
+    </div>
+    <div class="loopback">&circlearrowleft; credits earned by sharing pay for the spots you take later</div>
+  </section>
+
+  <!-- 4 Features -->
+  <section class="slide" data-title="What you can do">
+    <div class="kicker">The app</div>
+    <h2>Everything a driver needs, in one place</h2>
+    <div class="grid g3" style="margin-top:24px">
+      <div class="card"><h3>Find parking</h3><p>Search around your GPS position or a street address, within a radius you choose.</p></div>
+      <div class="card"><h3>Community spots</h3><p>See spots other drivers are leaving, starred when GPS shows they have already left.</p></div>
+      <div class="card"><h3>Reserve</h3><p>Hold a spot for 10 minutes with a live countdown, then tap I parked.</p></div>
+      <div class="card"><h3>Navigate</h3><p>One tap opens Google Maps with directions to your reserved spot.</p></div>
+      <div class="card"><h3>Leave parking</h3><p>Announce now or in a few minutes, cancel, and confirm when you have left.</p></div>
+      <div class="card"><h3>Wallet &amp; cars</h3><p>Credits, reputation tier and free unlocks at a glance. Keep your cars on file.</p></div>
+    </div>
+  </section>
+
+  <!-- 5 Finding -->
+  <section class="slide" data-title="Finding a spot">
+    <div class="kicker">Finding a spot</div>
+    <h2>Community spots come first</h2>
+    <div class="cols">
+      <div>
+        <ul>
+          <li>Spots other drivers are leaving sit at the top, then everything else, nearest first.</li>
+          <li><span class="pill orange">Locked</span> shows the driver's first name and an approximate area.</li>
+          <li><span class="pill gold"><span class="star">&starf;</span> Verified</span> means the driver has already left, so the spot is probably free now.</li>
+          <li>Public spots carry a chip for their source: garage, sensor or municipal.</li>
+        </ul>
+      </div>
+      <div class="shot-wrap">
+        <img class="shot" src="assets/list-community.jpg" alt="Results list with a starred community spot and a locked one at the top">
+        <div class="caption">A starred spot above a locked one, then regular spots.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 Community spots -->
+  <section class="slide" data-title="Community spots">
+    <div class="kicker">Community spots</div>
+    <h2>Private by design</h2>
+    <p class="lead">A community spot is another person, so the app reveals as little as it can until you commit.</p>
+    <table>
+      <tr><th>State</th><th>What you see</th><th>What you can do</th></tr>
+      <tr><td><span class="pill orange">Locked</span></td><td>First name and last initial ("Maria K."), roughly when they leave, an area within about 100 m.</td><td>Unlock with a free daily unlock or 1 credit.</td></tr>
+      <tr><td><span class="pill green">Unlocked</span></td><td>The exact location.</td><td>Tick it, open it, reserve it.</td></tr>
+      <tr><td><span class="pill gold"><span class="star">&starf;</span> Verified</span></td><td>"Has left, so it is probably free now."</td><td>Stays on offer for 10 minutes after the driver leaves.</td></tr>
+    </table>
+    <p class="small muted" style="margin-top:16px">The blur is the same every time, so repeated searches cannot average it away. Other drivers never see an email address.</p>
+  </section>
+
+  <!-- 7 Lifecycle -->
+  <section class="slide" data-title="Leaving parking">
+    <div class="kicker">Leaving parking</div>
+    <h2>A verified departure keeps the spot on offer</h2>
+    <svg class="diagram" viewBox="30 60 700 346" role="img" aria-label="Announcement lifecycle: announced, claimed, confirmed, cancelled, departed, expired" style="flex:1;min-height:0">
+      <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7C8A9C"/></marker></defs>
+      <g fill="none" stroke="#7C8A9C" stroke-width="1.5">
+        <path d="M198 208H240V100H302" marker-end="url(#a1)"/>
+        <path d="M198 232H270V340H302" marker-end="url(#a1)"/>
+        <path d="M380 316V124" marker-end="url(#a1)"/>
+        <path d="M458 100H562" marker-end="url(#a1)"/>
+        <path d="M458 340H562" marker-end="url(#a1)"/>
+        <path d="M120 196V124" marker-end="url(#a1)"/>
+        <path d="M120 244V392H640V364" marker-end="url(#a1)"/>
+      </g>
+      <g font-size="16" text-anchor="middle" fill="#1B2430">
+        <g><rect x="42" y="196" width="156" height="48" rx="10" fill="#fff" stroke="#BCC8D8" stroke-width="1.5"/><text x="120" y="225">Announced</text></g>
+        <g><rect x="302" y="76" width="156" height="48" rx="10" fill="#fff" stroke="#BCC8D8" stroke-width="1.5"/><text x="380" y="105">Claimed</text></g>
+        <g><rect x="562" y="76" width="156" height="48" rx="10" fill="#fff" stroke="#BCC8D8" stroke-width="1.5"/><text x="640" y="105">Confirmed</text></g>
+        <g><rect x="42" y="76" width="156" height="48" rx="10" fill="#fff" stroke="#BCC8D8" stroke-width="1.5"/><text x="120" y="105">Cancelled</text></g>
+        <g><rect x="302" y="316" width="156" height="48" rx="10" fill="#E3EEF9" stroke="#1565C0" stroke-width="2.5"/><text x="380" y="345" font-weight="700">Departed &#9733;</text></g>
+        <g><rect x="562" y="316" width="156" height="48" rx="10" fill="#fff" stroke="#BCC8D8" stroke-width="1.5"/><text x="640" y="345">Expired</text></g>
+      </g>
+      <g font-size="12" fill="#5A6675">
+        <text x="246" y="164">seeker reserves it</text>
+        <text x="262" y="292" text-anchor="end">left, GPS verified</text>
+        <text x="388" y="232">seeker reserves it</text>
+        <text x="510" y="88" text-anchor="middle">taps I parked</text>
+        <text x="510" y="328" text-anchor="middle">10 min offer ends</text>
+        <text x="128" y="166">driver cancels</text>
+        <text x="380" y="384" text-anchor="middle">no-show: 10 min after the announced time</text>
+      </g>
+    </svg>
+    <p class="small muted" style="margin:6px 0 0">GPS verification pays a reduced reward once, and a departed spot is never penalised as a no-show. The leaver can announce again straight away.</p>
+  </section>
+
+  <!-- 8 Credits -->
+  <section class="slide" data-title="Credits and reputation">
+    <div class="kicker">Credits &amp; reputation</div>
+    <h2>A small, honest economy</h2>
+    <div class="cols" style="gap:36px">
+      <div style="flex:1.25">
+        <table>
+          <tr><th>Event</th><th>Credits</th><th>Reputation</th></tr>
+          <tr><td>Register (once)</td><td class="num pos">+3</td><td>&ndash;</td></tr>
+          <tr><td>Announce (first 3 a day)</td><td class="num pos">+1</td><td>&ndash;</td></tr>
+          <tr><td>A seeker takes your spot</td><td class="num pos">+3</td><td class="num pos">+2</td></tr>
+          <tr><td>GPS verifies you left</td><td class="num pos">+1</td><td class="num pos">+1</td></tr>
+          <tr><td>No-show</td><td class="num neg">&minus;1</td><td class="num neg">&minus;3</td></tr>
+          <tr><td>Unlock (after free ones)</td><td class="num neg">&minus;1</td><td>&ndash;</td></tr>
+        </table>
+        <p class="small muted" style="margin-top:10px">Confirmation credits are multiplied by your tier. The ledger is append-only: every earn, spend and refund is a visible row.</p>
+      </div>
+      <div style="flex:1">
+        <div class="card" style="margin-bottom:14px"><h3>Bronze</h3><p>From 0 reputation &middot; 1 free unlock a day &middot; x1.0</p></div>
+        <div class="card" style="margin-bottom:14px"><h3>Silver</h3><p>From 70 &middot; 2 free unlocks a day &middot; x1.25</p></div>
+        <div class="card"><h3>Gold</h3><p>From 120 &middot; 3 free unlocks a day &middot; x1.5</p></div>
+        <p class="small muted" style="margin-top:12px">An unlock is refunded when the spot is taken by someone else, cancelled or expired.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 Fair play -->
+  <section class="slide" data-title="Fair play">
+    <div class="kicker">Fair play</div>
+    <h2>Four rules keep the economy from being farmed</h2>
+    <div class="grid g2" style="margin-top:20px">
+      <div class="card"><h3>Daily cap</h3><p>At most 5 rewarded confirmations per account per day. Beyond that the spot still works, but pays nothing.</p></div>
+      <div class="card"><h3>Minimum time before "I've left"</h3><p>It counts only 2 minutes after announcing, so walking off straight away proves nothing.</p></div>
+      <div class="card"><h3>Be at the spot to say "I parked"</h3><p>The seeker's position is checked: within 75 m of a community spot.</p></div>
+      <div class="card"><h3>Repeated pairs are not paid</h3><p>The same two accounts trading spots stop earning after 2 trades in 24 hours, and it is logged.</p></div>
+    </div>
+    <p class="small muted" style="margin-top:20px">A driver who really leaves or parks is never blocked, only unpaid past the limits. All the numbers are server settings.</p>
+  </section>
+
+  <!-- 10 Maps -->
+  <section class="slide" data-title="Maps and navigation">
+    <div class="kicker">Maps &amp; navigation</div>
+    <h2>See the search area, your car and the spots</h2>
+    <div class="cols">
+      <div>
+        <ul>
+          <li>A circle shows your search radius.</li>
+          <li>A blue car marks you, and each ticked spot has a coloured marker.</li>
+          <li>A gold ring and a star mark a verified-departed spot.</li>
+          <li>Tap a marker, then <b>Open this spot</b> to go straight to its reservation.</li>
+          <li><b>Navigate</b> hands the route to Google Maps.</li>
+        </ul>
+      </div>
+      <div class="shot-wrap">
+        <img class="shot" src="assets/map-radius-star.jpg" alt="Map with the search radius circle and a starred spot">
+        <div class="caption">Search radius and a starred spot on the OpenStreetMap map.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 Address search -->
+  <section class="slide" data-title="Address search">
+    <div class="kicker">Address search</div>
+    <h2>Real Zografou addresses, in Greek or Latin letters</h2>
+    <div class="cols">
+      <div>
+        <div style="display:flex; gap:40px; margin-bottom:22px">
+          <div><div class="big">3,489</div><div class="small muted">addresses</div></div>
+          <div><div class="big">217</div><div class="small muted">streets</div></div>
+        </div>
+        <ul>
+          <li>Open data from OpenStreetMap, served by our own API with no third-party geocoder.</li>
+          <li>Suggestions appear as you type. <b>papagou 97</b> and <b>&Pi;&alpha;&pi;&#940;&gamma;&omicron;&upsilon; 97</b> find the same door.</li>
+          <li>The search, the refresh and reservations then centre on the address you picked.</li>
+        </ul>
+      </div>
+      <div class="shot-wrap">
+        <img class="shot" src="assets/address-autocomplete.jpg" alt="Address autocomplete suggestions for papagou 9">
+        <div class="caption">Typing "papagou 9" returns Greek street addresses.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 Architecture -->
+  <section class="slide" data-title="Architecture">
+    <div class="kicker">Under the hood</div>
+    <h2>One API owns the rules and the data</h2>
+    <svg class="diagram" viewBox="14 54 740 332" role="img" aria-label="Phone app talks to an API with Api, Application, Infrastructure and Domain layers, and a PostgreSQL database" style="flex:1;min-height:0">
+      <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7C8A9C"/></marker></defs>
+      <g fill="none" stroke="#7C8A9C" stroke-width="1.5">
+        <path d="M200 130H264" marker-start="url(#a2)" marker-end="url(#a2)"/>
+        <path d="M112 210V250" marker-end="url(#a2)"/>
+        <path d="M353 152V190" marker-end="url(#a2)"/><path d="M515 152V190" marker-end="url(#a2)"/>
+        <path d="M353 246V288" marker-end="url(#a2)"/><path d="M515 246V288" marker-end="url(#a2)"/>
+        <path d="M588 218H632" marker-end="url(#a2)"/><path d="M604 130H632" marker-end="url(#a2)"/>
+      </g>
+      <g font-size="14" text-anchor="middle" fill="#1B2430">
+        <rect x="24" y="110" width="176" height="100" rx="10" fill="#E3EEF9" stroke="#1565C0" stroke-width="2.5"/>
+        <text x="112" y="146" font-weight="700" font-size="16">Phone app</text><text x="112" y="170" font-size="13">Expo / React Native</text><text x="112" y="188" font-size="12" fill="#5A6675">Android, iPhone, web</text>
+        <rect x="24" y="250" width="176" height="64" rx="10" fill="#fff" stroke="#BCC8D8" stroke-width="1.5"/>
+        <text x="112" y="276" font-size="13">OpenStreetMap tiles</text><text x="112" y="296" font-size="13">Google Maps (Navigate)</text>
+        <rect x="264" y="64" width="340" height="312" rx="12" fill="#EAEFF5" stroke="#BCC8D8" stroke-width="1.5"/>
+        <text x="280" y="88" text-anchor="start" font-weight="700" font-size="15">API on Heroku (ASP.NET Core 8)</text>
+        <rect x="280" y="108" width="308" height="44" rx="8" fill="#fff" stroke="#BCC8D8"/><text x="434" y="135">Api: controllers, sign-in, JWT</text>
+        <rect x="280" y="190" width="146" height="56" rx="8" fill="#fff" stroke="#BCC8D8"/><text x="353" y="214" font-weight="700">Application</text><text x="353" y="234" font-size="12" fill="#5A6675">rules and services</text>
+        <rect x="442" y="190" width="146" height="56" rx="8" fill="#fff" stroke="#BCC8D8"/><text x="515" y="214" font-weight="700">Infrastructure</text><text x="515" y="234" font-size="12" fill="#5A6675">database access</text>
+        <rect x="280" y="288" width="308" height="56" rx="8" fill="#fff" stroke="#BCC8D8"/><text x="434" y="312" font-weight="700">Domain</text><text x="434" y="332" font-size="12" fill="#5A6675">entities and repository interfaces</text>
+        <rect x="632" y="190" width="112" height="56" rx="8" fill="#fff" stroke="#BCC8D8"/><text x="688" y="214" font-weight="700">PostgreSQL</text><text x="688" y="234" font-size="12" fill="#5A6675">all app data</text>
+        <rect x="632" y="108" width="112" height="44" rx="8" fill="#fff" stroke="#BCC8D8"/><text x="688" y="135" font-size="12">NYC open data</text>
+      </g>
+      <text x="232" y="122" text-anchor="middle" font-size="12" fill="#5A6675">HTTPS</text>
+    </svg>
+    <p class="small muted" style="margin:6px 0 0">Both sides are built against one shared contract file. A background job every 30 seconds ends no-shows and releases lapsed claims.</p>
+  </section>
+
+  <!-- 13 Stack -->
+  <section class="slide" data-title="Technology">
+    <div class="kicker">Technology</div>
+    <h2>Built to be maintained</h2>
+    <div class="grid g2" style="margin-top:18px">
+      <div class="card"><h3>Client</h3><ul><li>Expo, React Native, TypeScript (strict)</li><li>Expo Router, React Native Paper</li><li>Redux Toolkit and Context</li><li>Leaflet map in a WebView</li></ul></div>
+      <div class="card"><h3>API</h3><ul><li>ASP.NET Core 8, four-layer clean architecture</li><li>EF Core 9 on PostgreSQL</li><li>ASP.NET Identity, revocable JWT</li><li>Contract-first (one shared types file)</li></ul></div>
+      <div class="card"><h3>Delivery</h3><ul><li>Docker container on Heroku</li><li>Migrations and address data load on start</li><li>GitHub Actions builds the Android APK</li></ul></div>
+      <div class="card"><h3>Quality</h3><ul><li>Integration tests against a real Postgres</li><li>Accessibility labels on controls</li><li>Responsive: portrait, landscape, safe areas</li></ul></div>
+    </div>
+  </section>
+
+  <!-- 14 Status -->
+  <section class="slide" data-title="Status and next steps">
+    <div class="kicker">Where we are</div>
+    <h2>Working end to end, with honest gaps</h2>
+    <div class="cols" style="gap:36px">
+      <div class="card" style="border-color:#BFE3C4">
+        <h3 style="color:var(--green)">Done</h3>
+        <ul>
+          <li>Accounts, wallet, tiers and a credit ledger</li>
+          <li>Community spots, verified departures, anti-farming rules</li>
+          <li>Address search and maps with search radius</li>
+          <li>Deployed API and an installable Android APK</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:#F0D9A8">
+        <h3 style="color:#8A6100">Next</h3>
+        <ul>
+          <li>Real Zografou parking data (garage and sensor spots are simulated today)</li>
+          <li>Confirm the map on every phone in the release APK</li>
+          <li>iPhone build and Play Store signing</li>
+          <li>Reservation timer counted from the server</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 15 End -->
+  <section class="slide title" data-title="Thank you">
+    <div class="kicker">Thank you</div>
+    <h1>Questions?</h1>
+    <p>Park Agent &middot; give a spot, get a spot.</p>
+    <div class="meta">Andreas Mitrou</div>
+  </section>
+
+</div>
+
+<div class="hint">&larr; &rarr; or swipe &middot; F fullscreen &middot; P print to PDF</div>
+<div id="hud">
+  <button id="prev" aria-label="Previous slide">&larr;</button>
+  <span id="count" aria-live="polite">1 / 1</span>
+  <button id="next" aria-label="Next slide">&rarr;</button>
+  <button id="full" aria-label="Fullscreen">Fullscreen</button>
+</div>
+
+<script>
+(function () {
+  var stage = document.getElementById('stage');
+  var slides = Array.prototype.slice.call(stage.querySelectorAll('.slide'));
+  var bar = document.getElementById('bar');
+  var count = document.getElementById('count');
+  var index = 0;
+
+  function fit() {
+    var s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+    stage.style.transform = 'scale(' + s + ')';
+    stage.style.left = Math.max(0, (window.innerWidth - 1280 * s) / 2) + 'px';
+    stage.style.top = Math.max(0, (window.innerHeight - 720 * s) / 2) + 'px';
+  }
+
+  function show(i, push) {
+    index = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach(function (el, n) { el.classList.toggle('active', n === index); });
+    bar.style.width = ((index + 1) / slides.length * 100) + '%';
+    count.textContent = (index + 1) + ' / ' + slides.length;
+    document.title = index === 0 ? 'Park Agent' : slides[index].getAttribute('data-title') + ' · Park Agent';
+    if (push !== false) { try { history.replaceState(null, '', '#' + (index + 1)); } catch (e) {} }
+  }
+
+  function fromHash() {
+    var n = parseInt((location.hash || '').replace('#', ''), 10);
+    show(isNaN(n) ? 0 : n - 1, false);
+  }
+
+  function toggleFull() {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    switch (e.key) {
+      case 'ArrowRight': case 'ArrowDown': case 'PageDown': case ' ': case 'Enter': e.preventDefault(); show(index + 1); break;
+      case 'ArrowLeft': case 'ArrowUp': case 'PageUp': case 'Backspace': e.preventDefault(); show(index - 1); break;
+      case 'Home': show(0); break;
+      case 'End': show(slides.length - 1); break;
+      case 'f': case 'F': toggleFull(); break;
+      case 'p': case 'P': window.print(); break;
+    }
+  });
+
+  // Click the right/left third of the screen, or swipe.
+  var startX = null;
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('#hud') || e.target.closest('a')) return;
+    show(e.clientX > window.innerWidth * 0.33 ? index + 1 : index - 1);
+  });
+  document.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (startX === null) return;
+    var dx = e.changedTouches[0].clientX - startX;
+    startX = null;
+    if (Math.abs(dx) > 50) { show(dx < 0 ? index + 1 : index - 1); e.preventDefault(); }
+  });
+
+  document.getElementById('prev').addEventListener('click', function (e) { e.stopPropagation(); show(index - 1); });
+  document.getElementById('next').addEventListener('click', function (e) { e.stopPropagation(); show(index + 1); });
+  document.getElementById('full').addEventListener('click', function (e) { e.stopPropagation(); toggleFull(); });
+
+  window.addEventListener('resize', fit);
+  window.addEventListener('hashchange', fromHash);
+  window.addEventListener('beforeprint', function () { stage.style.transform = 'none'; });
+  window.addEventListener('afterprint', fit);
+
+  fit();
+  fromHash();
+})();
+</script>
+</body>
+</html>

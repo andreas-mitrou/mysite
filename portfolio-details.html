@@ -113,6 +113,41 @@ Sticky Navigation
 End Sticky Navigation
 ==================================== -->
 
+<section class="section" id="project3">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12 text-center">
+        <h1>Park Agent - Community Parking App</h1>
+      </div>
+      <div class="col-lg-12">
+        <p>Park Agent is a mobile app where drivers help each other find parking. A driver who is about to leave announces the spot, nearby drivers can unlock and reserve it, and a small credit and reputation system keeps the exchange fair: sharing a spot earns credits, taking one costs a free daily unlock or a single credit.</p>
+        <p class="mb-50 text-center">
+          <a class="btn btn-transparent" href="/park-agent/">View the presentation</a>
+        </p>
+        <div class="text-center">
+          <img class="img-fluid mb-50" src="images/park-agent-list.jpg" alt="Park Agent results list with a starred community spot and a locked one at the top">
+        </div>
+        <p>What it does:</p>
+        <ul class="mb-50" style="list-style: disc; padding-left: 28px;">
+          <li style="margin-bottom: 12px;"><strong>Find parking</strong> around your GPS position or a street address, with search-as-you-type over 3,489 real addresses of the Zografou municipality (OpenStreetMap data), in Greek or Latin letters.</li>
+          <li style="margin-bottom: 12px;"><strong>Community spots</strong> are shown first. The exact location stays hidden until you unlock it, only the driver's first name and last initial is shown, and a spot is starred when GPS shows the driver has already left.</li>
+          <li style="margin-bottom: 12px;"><strong>Reservations</strong> hold a spot for 10 minutes with a live countdown, and one tap opens Google Maps with directions.</li>
+          <li style="margin-bottom: 12px;"><strong>Credits and reputation</strong> are kept in an append-only ledger, with Bronze, Silver and Gold tiers, and rules that stop the economy from being farmed (daily caps, a minimum time before "I've left", a position check at "I parked", and no rewards for the same two accounts trading repeatedly).</li>
+          <li style="margin-bottom: 12px;"><strong>Maps</strong> show your position, the ticked spots and a circle with the search radius.</li>
+        </ul>
+        <div class="text-center">
+          <img class="img-fluid mb-50" src="images/park-agent-map.jpg" alt="Park Agent map with the search radius circle and a starred spot">
+        </div>
+        <p class="mb-50">The backend is an ASP.NET Core 8 API in four layers (Api, Application, Infrastructure, Domain) on PostgreSQL through EF Core, with ASP.NET Identity and revocable JWT tokens, and a background job that ends no-shows and expires spots nobody took. The client is an Expo / React Native app in TypeScript with Redux Toolkit and a Leaflet map. Both sides are written against one shared contract file. The API runs in a Docker container on Heroku and GitHub Actions builds the Android APK.</p>
+        <p class="mb-50">Status: working end to end. The garage and sensor spots are simulated for now, and connecting real parking data for Zografou is the next step.</p>
+        <div class="text-center">
+          <img class="img-fluid mb-50" src="images/park-agent-address.jpg" alt="Park Agent address autocomplete suggestions">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="section" id="project1">
   <div class="container">
     <div class="row">
